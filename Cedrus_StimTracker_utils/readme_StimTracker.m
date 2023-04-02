@@ -5,135 +5,112 @@
 % UTF-8
 % Dell S2319HS 1920*1080 60Hz
 % -------------------------------------------------------------------------
-% v0.0 Aug.17,2022 wrote it SK
-% 
+% v0.0 Aug.17,2022 SK Based on Psychtoolbox_demo_Japanese/demo_StimTracker.m
+% v1.0 Mar.16,2023 SK English translation/revision for multimodal-psych
 % -------------------------------------------------------------------------
-% comments are in Japanese. If broken, open in Japanese language environment.
+% 
+% This script is a basic demo of synchronization using the Cedrus StimTracker 
+% and Psychtoolbox3. 
+% 
+% Information in this script might be old and inaccurate for future readers.
+% Please make it a habbit to check the original sources and if you find any
+% inaccurate information, we would appreciate if you could let us know or 
+% even better, send a pull request.
 % 
 % **dependencies**
 % MATLAB R2019b or later.
 % Requires Psychtoolbox 3.
 % 
 % **references**
-% Cedrus公式サポートページで公開されているmatlab_output_sample.mを参考に書かれている。
+% Please refer to the official documents from Cedrus, Psychtoolbox and MATLAB.
+% 
+% matlab_output_sample.m : from Cedrus's official support page.
 % https://www.cedrus.com/support/stimtracker/tn1920_other_resources.htm
-% 詳細はCedrus公式サポートページのXIDコマンド一覧も参照。
+% 
+% Also, check out the list of XID commands on Cedrus's official support page.
 % https://www.cedrus.com/support/xid/commands.htm
 % 
-% -------------------------------------------------------------------------
 % 
-%              知らない用語はめんどくさがらずにググりましょう！
-% 
-% -------------------------------------------------------------------------
-%% 想定する知識レベル
-% 
-% MATLABとPsychtoolbox(PTB)の基礎を理解していること。
-% PTBの基礎が不安な人はまずは./demo_ForBeginner.mを参照。
-% 基本的なことはわかっている前提で不要なコメントは省略する。
-% 
-% bitとbyteの関係性、2進数と16進数とASCIIの関係性を理解すること。
-% 以下のサイトがわかりやすかったので不安な人は参考に。
-% https://jumbleat.com/2016/10/14/about_hex/
-% 
-% StimTrackerの基本的な仕組みや実験環境の構成についての理解も必要である。
-% 残念ながら、同期システムのマニュアル化の試みは今のところ、ことごとく失敗している。
-% 実験補助者はともかく、実験環境を構築する者は手順書に従うだけではダメで、自分で実験にあ
-% わせて機器をパズルのように組み合わせて構築することが要求されることが原因である。
-% 決して難しいわけではないが、単純な暗記や記憶に頼れないことが学習コストに繋がっている。
-% 
-% いまのところ、ラズベリーパイやアルドゥイノ等を用いて電子工作をするトレーニングが最短で
-% 習得できる方法だと思われる。急がば廻れである。
-% 学習コストは新しくプログラミング言語を習得する場合と同程度である。
-% 速い者で1〜2週間程度、通常は1〜2ヶ月程度の時間を割けば習得可能である。
-% 決して難しいわけではないことは強調するが、プログラミング同様に好き嫌いは分かれるので全
-% 員ができる必要は無いと思う。
-% 
-% 結論として、
-% ・学習コストを割けない人はわかる人に丸投げせよ
-% ・自分で勉強したい人は1ヶ月間は勉強時間を捻出せよ
-% というところに落ち着くのではないだろうか？
+%% Overview of StimTracker control via MATLAB
 % 
 % 
-%% MATLABによるStimTracker制御の概要
+% In this demo script, we will look into two of the many functions of the 
+% StimTracker.
+% - Sending TTL triggers by detecting light emittion by the monitor.
+% - Sending TTL triggers via USB via MATLAB command.
 % 
-% まず基本として、Cedrus公式のサポートページをちゃんと読み込むこと。
-% 何事にも言えることだが、他人に質問する前にまず公式のマニュアルやドキュメンテーションや
-% レファレンス、サポートページなどをきちんと確認する癖をつけることが重要。
-% 先生や先輩は悪気は無くても平気で嘘の情報を言うので1次情報を自分で確認しましょう。
+% Though these two functionalities are used together in this demo script,
+% keep in mind that these two function completely differently and could be 
+% used independently. 
 % 
-% このデモスクリプトではStimTrackerの2つの機能を扱う。
-% ・ディスプレイの発光を検出してTTLトリガーを出力する機能
-% ・USB経由でMATLABのコマンドからTTLトリガーを出力する機能
-% これら2つの機能は独立していて別々に使用可能だが、デモコード内では混ざっているので読む
-% 者はきちんと区別して理解すること。
-% TTL出力は本体裏側のDINコネクタより全8チャンネル出力。
-% 電圧： Lo:0V / Hi:+5V
-% 
-% High/Lowを指す用語には色々あるので文脈判断が必要。以下が例。
-% ・hi/lo
-% ・mark/space(markがhi、穿孔テープ/punched tape時代の名残)
-% ・on/off
-% ・1/0
-% ・pull up/pull down
-% 
-% 【このデモコードでは扱わない機能】
-% 外部入力パッドを用いた被験者のキー入力や他の機器からの信号中継などの機能は扱わない。
-% この機能は基本的にはライトセンサーと同等に仕組みである。
-% 適切に設定することによってStimTrackerはライトセンサーや音声センサー等による入力をUSB
-% 経由でタイムスタンプ付きのASCII文字列の形で出力することもできる。
-% 詳細は公式サポートページを参照。
+% TTL output is taken from the DIN connector on the backside of the StimTracker.
+% The StimTracker is a 5V system. Be careful when mixing with 3.3V systems.
+% - Lo:0V
+% - Hi:+5V
 % 
 % 
-%% ライトセンサーによるTTLトリガー
+% There are many other functions that are NOT explained in this demo script.
+% - Inputs by external response pads/devices.
+% - Signal passthrough from external devices.
+% - Converting sensor inputs to ASCII string with timestamp via USB.
+% See Cedrus's support page for more information.
 % 
-% ライトセンサーによるStimTrackerの制御は完全にパッシブであり、ライトセンサーがディス
-% プレイの発光を検出することでTTLトリガーを出力する。
-% 刺激提示ディスプレイの辺縁部の実験に影響の少ない箇所にライトセンサーを設置する。
-% 刺激提示ソフトウェアのディスプレイ制御により、センサー直下の部分が白く発光すれば接続し
-% たチャンネルがHiとなり、暗くなればLoとなる。
 % 
-% 基本的には実験前に実機を用いたテストが必要。
-% ソフトウェア側ではディスプレイの発光位置がセンサー位置と一致するように実験プログラムの
-% パラメータ調整をする必要がある。
-% ハードウェア側では、StimTracker本体のフロントパネルのボタンとダイヤルを操作してセン
-% サーの感度を調整する必要がある。
-% 実験者は以下の公式サポートページを読み込んで勉強しておくこと。
+%% TTL trigger via the light sensor
+% 
+% Light sensors are completely passive.
+% When the light sensor detects light, it sends out a TTL signal.
+% Place the light sensor on the display and use PTB to control the color lit
+% underneath the light sensor; white is Hi/black is Lo.
+% 
+% Pre-measurement testing with the actual hardware is mandatory.
+% - software: Adjust position parameters light sensor.
+% - hardware: Adjust sensitivity of light sensor using the controls on the
+% front panel on the StimTracker.
+% See Cedrus's supprot page for details.
 % https://www.cedrus.com/support/stimtracker/tn1906_using_st.htm
 % https://www.cedrus.com/support/stimtracker/tn1908_onset_visual.htm
 % 
-% センサーをどのチャンネルに接続しているのかを必ず意識すること。
-% チャンネルの対応表は以下の公式ページを参照。
+% Always check if the light sensor is plugged in the correct jack.
+% See Cedrus's supprot page for pin-out.
 % https://www.cedrus.com/support/stimtracker/tn1960_quad_ttl_output.htm
 % 
 % 
-%% USB接続によるTTLトリガー
+%% TTL trigger via USB
 % 
-% USBドライバーは、Linuxの場合はカーネルに組み込まれているため不要である。
-% Windowsの場合は通常はWindows Updateで自動的にインストールされるが、トラブルが発生
-% する場合は別途ドライバーのインストールが必要である。
+% USB drivers
+% - Linux:   Integrated in kernel.
+% - Windows: Windows Update will usually grab it. If it fails, install it
+% manually from:
 % https://ftdichip.com/drivers/vcp-drivers/
-% そもそもPTBをWindows上で使用すべきではない。
 % 
-% StimTrackerはUSBをシリアルポートとして通信することで制御できる。 
-% シリアルポートは単純な文字列を送るだけの旧式の通信方式で産業用の機械の制御や設定に今も
-% 広く用いられている（うちのラボで身近な例だとETG-4000）。
-% 初めて聞く人はRS-232Cについて軽くググっておくこと。
-% StimTrackerの場合はPCからStimTrackerにUSB経由でASCII文字列をリトルエンディアンで
-% 送信することで制御する。
-% MATLABの場合はserialport関数を用いて制御する。(serial関数は廃止予定なので使用禁止)
+% NOTE: Running PTB on Windows10/11 (or later) is a bad idea unless you 
+% really know what you're doing. If in doubt, go Linux.
+% 
+% StimTracker uses RS-232C aka serial through USB.
+% If you're new to serial, google "RS-232C". It's a widely used protocol in
+% industrial equipment, servers/switches/routers, and many more.
+% StimTracker is controlled by sending ASCII strings in little-endian.
+% 
+% Use the "serialport" function. Run:
 % help serialport
 % https://www.mathworks.com/help/matlab/serial-port-devices.html
+% The "serial" function is deprecated. Do NOT use it.
 % 
-% 送受信する文字列は機器ごとに予め定義されており、Cedrusでは独自にXID Version 2と呼称
-% されるコマンド群が実装されている。
-% 実験コードを書く人はCedrus公式サポートページにこれらのコマンドが全て詳しく書いてある
-% ので、必ず自分の目で確認すること。
+% When using RS-232C, you will often send command strings in ASCII.
+% If you're new, try familiarizing yourself in converting ASCII characters 
+% to hexadecimal or binary.
+% Commands used in RS-232C are predefined differently for each device.
+% Cedrus devices use the command "XID Version2".
+% Official documentation:
 % https://www.cedrus.com/support/xid/commands.htm
 % 
-% 【重要】MATLABからシリアル通信でTTLを出力した場合の遅延は5-6msとなるため、時間的精度
-% が要求される実験では必ずライトセンサーを使うこと。シリアル通信で高い精度が必要な場合は
-% CedrusのC++のライブラリを使うと遅延が2-3msに抑えられるため、それをmex関数にして使う
-% こと。
+% **IMPORTANT**
+% Sending TTL using RS-232C from MATLAB will have latency.
+% MATLAB: 5-6ms
+% C++:    2-3ms
+% If timing is important, always use the light sensor or at least parallel port.
+% If you need to use RS-232C with accurate timing, write a mex function from C++. 
 % 
 % 
 %% contents of this demo
@@ -159,7 +136,8 @@
 % 
 % overall flow
 % 
-% 【START】
+% {START}
+% 
 % Search serial port and locate Stim Tracker.
 % 
 % Set TTL pulse duration to 1 sec.
@@ -179,7 +157,8 @@
 % end
 % 
 % TTL ch.3(USB2) 1s
-% 【END】
+% 
+% {END}
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -189,15 +168,16 @@ clear device
 commandwindow
 homeDir = fileparts(mfilename('fullpath'));
 sca
+GetSecs(0);
 PsychDefaultSetup(2);
-% Screen('Preference', 'SyncTestSettings', 0.002); %only when noisy
+% Screen('Preference', 'SyncTestSettings', 0.002); % uncommnet only when noisy
 
 
 %% detect StimTracker and open serial port %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Search serial port and identify StimTracker, then do initial setup.
 
 % parameters
-device_found = 0;
+deviceFound = 0;
 ports = serialportlist("available");
 
 % search serial ports
@@ -212,95 +192,90 @@ for p = 1:length(ports)
     % clear I/O buffer
     
     write(device,"_c1","char")
-    query_return = read(device,5,"char");
-    % 文字列"_c1"をchar型でシリアルポートのデバイスに送信すると、Cedrusのデバイスは
-    % "_xid0"などの文字列で応答する。
-    % この応答の文字列は
-    % "_xid" + "モードを示す数字"
-    % の形になっている。
-    % StimTrackerはXIDモード以外のモードには対応していないので応答文字列は必ず"_xid0"
-    % となるが、他のCedrus製品を使用する場合は適切に設定する必要があるので注意。 
+    queryReturn = read(device,5,"char");
+    % if you send the text "_c1"(in char array) to a Cedrus device via sereal, it will respond 
+    %  by sending a text such as "_xid0"
+    % This response text is in the format:
+    % "_xid" + "number that indicates the mode"
+    % 
+    % StimTracker only has XID mode so the response text will always be "_xid0"
+    % Some Cedrus devices have other modes so be aware.
     
     % Cedrus device detected
-    if ~isempty(query_return) && query_return == "_xid0"
-        device_found = 1;
+    if ~isempty(queryReturn) && queryReturn == "_xid0"
+        deviceFound = 1;
         break
     end
 end
 
-% Cedrus devices undetected
-if device_found == 0
+% Cedrus devices not detected
+if deviceFound == 0
     disp("No XID device found. Exiting.")
     return % exit script
 end
 
-%% まずはじめに設定："mp"コマンドを使ってTTLパルスの持続時間を設定
+%% Initial setup： set TTL duration for using "mp" command via USB
 % 
-% 後述の"mh"コマンドを使って指定したチャンネルでTTLトリガーを出力するが、その際は以下の
-% "mp"コマンドで設定する持続時間（今回の場合1000ms）が適用される。
+% In the experiment, we will use the "mh" command to send a TTL trigger
+% from a specified channel.
+% We will need to predefine the TTL trigger duration (the length of time that
+% the line is "Hi" for each call of the "mh" command) using the "mp" command.
+% In this demo, we will set the defaul TTL duration to 1000ms.
 % 
-% "mp" + "持続時間"
+% We send the string: "mp" + "duration in 4byte number"
 % 
-% ・持続時間：パルス持続時間（ミリ秒）、デフォルト値=0(持続時間無限)、4バイト、リトルエンディアン
+% duration in 4byte number: pulse duration in ms、default=0(unlimited)
 % 
-% TTLパルスのデフォルト持続時間を1秒に設定するコマンドは十六進数・ASCIIに変換すると以
-% 下のようになる。※これらは数値としては全て同じである。
+% NOTE: byte order is little endian
 % 
-% 【注意】バイトオーダーはリトルエンディアンなので逆順になる（わからなければ必ずググれ）
+% example: duration = 1000ms
 % 
 %  m    p            1000
 % 0x6D 0x70   0xE8 0x03 0x00 0x00   <- hex
 % 109  112    232   3    0    0     <- ASCII
 % 
-% 例えば、16進数を用いる場合は以下の様にシリアルポートで送信する。
-write(device, [0x6D, 0x70, 0xE8, 0x03, 0x00, 0x00], "uint8"); 
-% また、別の書き方として、上と全く同じ信号を、16進数ではなくASCIIで送信したい場合は以下
-% の通り。
-% write(device,sprintf("mp%c%c%c%c", 232, 3, 0, 0), "char");
-% 
-% 【参考】さらに別の書き方として、末尾で定義した関数を使うと上のwriteと全く同じ処理を以
-% 下のようにわかりやすく書くこともできる。
-% setPulseDuration(device, 1000)
-% 第2引数で持続時間を指定。
+write(device, [0x6D, 0x70, 0xE8, 0x03, 0x00, 0x00], "uint8"); % input by hex 
+% write(device, sprintf("mp%c%c%c%c", 232, 3, 0, 0), "char"); % alternate input by ASCII
 
 
-%% "mh"コマンドをつかってUSB経由で指定チャンネルでTTLトリガーを送信する 
-% 今回のUSBによるTTLトリガーの送信は全て"mh"コマンドを使用するのでここで説明しておく。
+%% Sending TTL trigger using the "mh" command via USB
 % 
-% "mh" + "チャンネル"
+% We send the TTL trigger using the "mh" command.
+% As stated above, TTL trigger will end after the duration length preset by
+% the "mp" command.
 % 
-% ・チャンネル：長さ2バイト、8チャンネルの各ビットにつき1=Hi/0=Lo、StimTrackerの場合
-% は8チャンネルのみなので全16桁のうち上8桁は無視、リトルエンディアン
+% We send the string: "mh" + "channels in 2bytes"
 % 
-% 上の"mp"コマンドで指定した持続時間のTTLパルスを送信できる。
-% 例えば、チャンネル1,2,3(USB0,1,2)のみ送信する場合は以下のようになる。
-%
-% 【注意】チャンネルのビット順は逆になるのでch8,ch7,...,ch2,ch1の順番で2進数で表記する。
+% channels in 2 bytes: For each of the 8 TTL channels, set each digit 1=Hi/0=Lo.
+% StimTracker only has 8 channels so we ignore the first 8 of the 16 digits.
 % 
-%  m    h     0b00000111
-% 0x6D 0x68   0x07 0x00     <- hex
-% 109  104     7    0       <- ASCII
+% NOTE: byte order is little endian;
+% set digits in order of: ch8,ch7,...,ch2,ch1,0,0,0,0,0,0,0,0
 % 
-% write(device, [0x6D, 0x68, 0xE0, 0x00], "uint8"); %input by hex
-%  または
-% write(device,sprintf("mh%c%c", 7, 0), "char"); %input by ASCII
+% example: send TTL only on ch.1,2,3(USB0,1,2)
 % 
-% 末尾のコメントにチャンネルのビット指定の例をいくつか載せているので参考に。
+%  m    h    0b00000111 0b00000000
+% 0x6D 0x68     0x07       0x00     <- hex
+% 109  104       7          0       <- ASCII
 % 
-% 初期設定時に全てのチャンネルをLoに落としておくと癖をつけておくと良い
+% write(device, [0x6D, 0x68, 0xE0, 0x00], "uint8");    % input by hex
+% write(device, [0x6d, 0x68, 0b00000111, 0], "uint8"); % input by hex & binary
+% write(device, sprintf("mh%c%c", 7, 0), "char");      % input by ASCII
+
+% It's a good habit to initialize by lowering all lines
 write(device, [0x6D, 0x68, 0x00, 0x00], "uint8"); % lower all lines
 
 
 %% PTB Parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-scr   = max(Screen('Screens')); % 環境依存
+scr   = max(Screen('Screens'));
 bkClr = BlackIndex(scr);
 whClr = WhiteIndex(scr);
 
-% light sensor parameters 環境依存　モニターにあわせてパラメーターを調整する
-litSenX = 15;  %発光位置X
-litSenY = 15;  %発光位置Y
-litDiam = 10;  %発光範囲直径
-litT    = 2.0; %発光時間秒
+% light sensor parameters Set these parameters appropriately to your monitor.
+litSenX = 15;  %light sensor position X in px
+litSenY = 15;  %light sensor position Y in px
+litDiam = 10;  %light sensor diameter   in px
+litT    = 2.0; %light-on     duration   in sec
 
 % task parameters
 bgClr   = (bkClr+whClr)/2; % bg:background
@@ -318,7 +293,7 @@ fixSz  = 30;
 try
 
     %% open window %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    [wptr, wRect] = PsychImaging('OpenWindow', scr, bgClr); % 環境依存
+    [wptr, wRect] = PsychImaging('OpenWindow', scr, bgClr);
 
     % initial settings
     Priority(1);
@@ -336,35 +311,36 @@ try
     %% Start Task %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 
     Screen('gluDisk', wptr, bkClr, litSenX, litSenY, litDiam); %light sensor(ch8) Lo
-    % ライトセンサー直下は全てのフレームで黒または白を描画すること。冒頭で定義したパラメーターでgluDiskを使用すると調整も簡単。
+    % Always draw black or white under the light sensor for all the frames.
+    % Using the 'gluDisk' function with the parameters set above is easy.
     flipT = Screen('Flip', wptr);
-    write(device,sprintf("mh%c%c", 1, 0), "char"); %USB0(ch1)
+    write(device, [0x6d, 0x68, 0b00000001, 0], "uint8"); %USB0(ch1)
     
     for i = 1:3
     
-        % 注視点表示
+        % display fixation cross
         Screen('gluDisk', wptr, bkClr, litSenX, litSenY, litDiam); %light sensor(ch8) Lo
         Screen('DrawTexture', wptr, fixTex, [], fixPos, [],0); %fixation cross
         flipT = Screen('Flip', wptr, flipT+swchT-0.5/hz);
         
-        % 視覚刺激提示開始
+        % start stim presentation
         Screen('gluDisk', wptr, whClr, litSenX, litSenY, litDiam); %light sensor(ch8) Hi
         DrawFormattedText(wptr, stimTxt, 'center', 'center', stimClr); %visual stimulus
-        flipT = Screen('Flip', wptr, flipT+fixT-0.5/hz);
-        write(device,sprintf("mh%c%c", 2, 0), "char"); %USB1(ch2)
+        stimStartT = Screen('Flip', wptr, flipT+fixT-0.5/hz);
+        write(device, [0x6d, 0x68, 0b00000010, 0], "uint8"); %USB1(ch2)
 
-        % litT < stimT の場合は、litT秒後にライトセンサーの出力だけを落として、それ以外は全く同じ刺激を提示する
+        % if litT < stimT , turn off the light sensor after litT seconds, keeping everything else as the same
         Screen('gluDisk', wptr, bkClr, litSenX, litSenY, litDiam); %light sensor(ch8) Lo
-        DrawFormattedText(wptr, stimTxt, 'center', 'center', stimClr); %全く同じ視覚刺激をレンダリング
-        Screen('Flip', wptr, flipT+litT-0.5/hz); %刺激提示時間がstimTとなるようにflipTにflip時刻を記録しない
+        DrawFormattedText(wptr, stimTxt, 'center', 'center', stimClr); %render so it looks the same
+        flipT = Screen('Flip', wptr, flipT+litT-0.5/hz);
 
-        % 視覚刺激提示終了
+        % end stim presentation
         Screen('gluDisk', wptr, bkClr, litSenX, litSenY, litDiam); %light sensor(ch8) Lo
-        flipT = Screen('Flip', wptr, flipT+stimT-0.5/hz);
+        flipT = Screen('Flip', wptr, stimStartT+stimT-0.5/hz);
     
     end
-    write(device,sprintf("mh%c%c", 4, 0), "char"); %USB2(ch3)
-    WaitSecs(2); % 初回呼び出しは時間精度低い
+    write(device, [0x6d, 0x68, 0b00000100, 0], "uint8"); %USB2(ch3)
+    WaitSecs(2); % If calling WaitSecs(), call GetSecs(0) in advance for time accuracy.
     sca
 
 catch me    
@@ -375,67 +351,3 @@ catch me
 end
 sca
 clear device
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 上の"mp"コマンドの説明コメントで言及した関数(Cedrusのデモコードより)
-
-function byte = getByte(val, index)
-    byte = bitand(bitshift(val,-8*(index-1)), 255);
-end
-
-function setPulseDuration(device, duration)
-%mp sets the pulse duration on the XID device. The duration is a four byte
-%little-endian integer.
-    write(device, sprintf("mp%c%c%c%c", getByte(duration,1),...
-        getByte(duration,2), getByte(duration,3),...
-        getByte(duration,4)), "char")
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% 【参考】チャンネルの指定は2進数で考える
-% 
-% 上述の通り、チャンネルは2進数でch8,ch7,...,ch2,ch1の順番で指定する。
-% 
-% 【例】
-% USB0 (ch.1)のみ
-% 0b000000001
-% 0x01 0x00    <- hex
-%  1    0      <- ASCII
-% 
-% USB1 (ch.2)のみ
-% 0b00000010
-% 0x02 0x00    <- hex
-%  2    0      <- ASCII
-% 
-% USB1 (ch.2) && USB2 (ch.3) 
-% 0b00000110
-% 0x06 0x00    <- hex
-%  6    0      <- ASCII
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% 【参考】"mx"コマンドでUSB経由で任意のTTL出力をする方法
-% 
-% USB経由で任意のチャンネルをHiまたはLoにするには上のようにシリアルポートのアドレスを特
-% 定したうえでそのポートに以下のようにASCII文字列をリトルエンディアンで送信する。
-% 
-% "mx" + "持続時間" + "チャンネル" + "パルスの回数" + "パルス間隔"
-% 
-% ・持続時間：2バイトのパラメーター。"0"でLo、"0xFFFF"でHi、他は任意の数字を指定する
-% ことでミリ秒単位でTTLのパルスの長さを指定する。
-% 
-% ・チャンネル：2バイトのパラメーター。"1"で指定したビットのチャンネルにコマンドが適用
-% され、"0"で指定したビットのチャンネルは無視される。
-% 
-% ・パルスの回数：1バイトのパラメーター。TTL出力の際のパルスの回数を指定する。持続時間
-% が"0"または"0xFFFF"の場合は無視される。
-% 
-% ・パルス間隔：2バイトのパラメーター。パルス間の間隔。パルスの回数が2未満の場合は無視さ
-% れる。
-% 
-% 詳細は公式サポートページを参照。この他にもたくさんのコマンドが載っている。
-% https://www.cedrus.com/support/xid/commands.htm
-% 
-% 例えば、USB 0,1,2で1秒間のパルスを一回だけ出力する場合は以下の文字列を送信する。
-%  m    x    ,    1000   , 0b00000111  ,  1    ,     0
-% 0x6D 0x78    0xE8 0x03    0x07 0x00    0x01    0x00 0x00  <-hex
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
