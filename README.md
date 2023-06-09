@@ -239,8 +239,22 @@ If the refresh rate = 60Hz, it will take approximately 16.7ms to scan from the t
 | 240 Hz | 4.166... ms |
 | 360 Hz | 2.777... ms |
 
-> If you're not familiar with how computer monitors work, check out this awesome video by The Slo Mo Guys.  
+> If you're not familiar with how computer monitors work and this doesn't make much sense, check out this awesome video by The Slo Mo Guys.  
 > [https://youtu.be/3BJU2drrtCM](https://youtu.be/3BJU2drrtCM)
+
+If timing is critical, measuring the latency is highly recommended. We can directly measure latency using a DAQ device as shown below.
+
+1. stimulus presentation computer
+2. stimulus presentation display
+3. Cedrus StimTracker or equivalent device
+4. DAQ device(preffered) or raspberry pi
+5. recording computer controlling DAQ device
+6. display cable
+7. light sensor
+8. TTL from light sensor
+9. TTL from stimulus presentation software
+
+![measuring latency](img/setup.png)
 
 ### RS-232C
 
@@ -293,6 +307,7 @@ Keep in mind that display technology is rapidly evolving and any information we 
 
 Behavioral responses could also be measured using TTL.  
 By connecting a 3.3V or 5V power source and a switch, we can send TTL when the participant presses the switch.  
+This is the same idea as connecting a switch to a GPIO pin on a raspberry pi.  
 (Note that you will need to consider switch/contact bounce unless you are using an optical switch.)  
 
 This was one of the ways to deal with the horrible time accuracy of conventional keyboards, but thanks to the gaming industry, our lives became much easier.  
@@ -300,7 +315,7 @@ Modern high-end gaming keyboards with high poling rates have the same or even be
 
 ## The Setup in the Paper
 
-Below is a list of the main components of this experiment setup.
+Below is a list of the main components of this experiment configuration.
 
 | | |
 |---|---|
@@ -311,7 +326,7 @@ Below is a list of the main components of this experiment setup.
 | physiological measurements | Miyuki Polymate V AP5148 |
 
 > Disclaimer:  
-> **Running PTB on Windows is a BAD idea!**  
+> **You should NOT be running PTB on Windows!**  
 > **Use Linux!**
 
 ![overview of experiment setup](img/experiment_setup.png)
