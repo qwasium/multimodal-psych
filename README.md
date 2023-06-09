@@ -242,17 +242,18 @@ If the refresh rate = 60Hz, it will take approximately 16.7ms to scan from the t
 > If you're not familiar with how computer monitors work and this doesn't make much sense, check out this awesome video by The Slo Mo Guys.  
 > [https://youtu.be/3BJU2drrtCM](https://youtu.be/3BJU2drrtCM)
 
-If timing is critical, measuring the latency is highly recommended. We can directly measure latency using a DAQ device as shown below.
+If timing is critical, measuring the latency is highly recommended. We can directly measure latency using a DAQ device as shown below.  
+By simultaneously presenting a visual stimulus and sending a TTL signal, we can measure the time difference between the two TTL signals(8 and 9 in the image below).
 
 1. stimulus presentation computer
 2. stimulus presentation display
 3. Cedrus StimTracker or equivalent device
-4. DAQ device(preffered) or raspberry pi
+4. DAQ device(preferred) or raspberry pi
 5. recording computer controlling DAQ device
 6. display cable
 7. light sensor
-8. TTL from light sensor
-9. TTL from stimulus presentation software
+8. TTL from light sensor(StimTracker)
+9. TTL from stimulus presentation software(Parallel port)
 
 ![measuring latency](img/setup.png)
 
