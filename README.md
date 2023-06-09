@@ -34,13 +34,21 @@ Niioka, K., Uga, M., Nagata, T., Tokuda, T., Dan, I., & Ochi, K. (2018).Cerebral
 
 ## Contents
 
-- ./Cedrus_StimTracker_utils
-  - ./C/debug_StimTracker.m : PTB utility for setting up/debugging Cedrus Stim Tracker with Psychtoolbox3.
-  - ./C/readme_StimTracker.m : Demonstration code for first-time users of Cedrus Stim Tracker with Psychtoolbox3.
-- ./img : Images for README.md
-- ./Niioka_etal_2023
-  - ./N/CIT_FINAL_V2.m : Raw experiment code for the CIT paper. Note: Dirty code but left as is.
-  - ./N/DateRandom4CIT.m : Function used in CIT_FINAL_V2.m. Note: function name and file name does not match.
+<pre>
+multimodal-psych
+│
+├── Cedrus_StimTracker_utils
+│   ├── debug_StimTracker.m:  PTB utility for Stim Tracker.
+│   └── readme_StimTracker.m: Demonstration code for beginners.
+│
+├── Niioka_etal_2023
+│   ├── CIT_FINAL_V2.m:   Raw experiment code for the CIT paper.
+│   └── DateRandom4CIT.m: Function used in CIT_FINAL_V2.m.
+│
+├── img/* : Images for README.md
+├── CITATION.cff
+└── README.md
+</pre>
 
 ## Guide for multimodal physiological measurements
 
@@ -50,7 +58,7 @@ Then, we will dive deeper into the details of how we combined fNIRS(ETG-4000) an
 
 ## Prerequisite Knowledge
 
-There are some good-to-knows before you start a multimodal measurement project.
+There are some good-to-knows before you start a multimodal measurement project.  
 
 - Basics of computer science.
   - Basic computer architechture.
@@ -86,8 +94,14 @@ There are some good-to-knows before you start a multimodal measurement project.
   [https://www.ni.com/en-us/shop/data-acquisition/sensor-fundamentals--data-acquisition-basics-and-terminology.html](https://www.ni.com/en-us/shop/data-acquisition/sensor-fundamentals--data-acquisition-basics-and-terminology.html)
 
 If you're familiar with these topics, great!  
-But for anyone who's not a tech-savvy nerd, playing around with a single-board computer like a Raspberry Pi or an Arduino is highly recommended.  
-They share many key concepts with multimodal psychological experiment setups and you can even use them to create custom DIY solutions.
+You'll probably already know most of the things I'll be talking about.  
+
+But for anyone who's not a tech-savvy nerd, take your time googling every single word you don't understand while you read along.  
+The whole idea of multimodal measurement is very simple, but you will have a hard time if you lack the fundamental knowledge.  
+
+Playing around with a single-board computer like a Raspberry Pi or an Arduino is highly recommended.  
+Don't be afraid to spend a bit of money and some time playing around with these. It'll be worth it.  
+These share many key concepts with multimodal psychological experiment setups and you can even use them to create custom DIY solutions.
 
 ## Basic Hardware Setup in Psychological Experiments
 
@@ -123,9 +137,9 @@ Generally speaking, we can categorize them into three levels. Note that this is 
 
 | level of connectivity | description |
 |---|---|
-| level 1: <br> no communication | Systems that have no i/o that can connect to the stimulus presentation computer. These are not designed to be connected to computers and the measured values are usually designed to be read visually. These are pretty much useless and you will not see them in devices that specialize in psychological measurement. <br> **example: regular mercury/alcohol thermometer** |
-| level 2: <br> one-way communication | Systems that equip standard i/o ports (which are capable of two way communication but) used only for receiving synchronization signals one-way. These will be the most common type you will see and will often have a connector for TTL or RS-232C. We will discuss these protocols in the next chapter. <br> **example: fNIRS and majority of psychophysiological measurement systems** |
-| level 3: <br> two-way communication | Systems that are highly integrated and could "talk" with the stimulus presentation computer. These are capable to expand beyond the S-O-R model. These can give the stimulus presentation computer instant direct feedback and quickly change the stimulus according to the parrticipant's response. <br> **example: keyboard, mouse and majority of eye trackers** |
+| level 1: <br> no communication | Systems that have no i/o that can connect to the stimulus presentation computer. These are usually designed to be used as a standalone device. The measured values are often designed to be read visually. These are pretty much useless and you will not see them in devices that specialize in psychological measurement. <br> **example: regular mercury/alcohol thermometer** |
+| level 2: <br> one-way communication | Systems that equip standard i/o ports (which are capable of two-way communication but) used only for receiving synchronization signals. These will be the most common type you will see and will often have a connector for TTL or RS-232C. We will discuss these protocols in the next chapter. <br> **example: fNIRS and majority of psychophysiological measurement systems** |
+| level 3: <br> two-way communication | Systems that are highly integrated and could "talk" with the stimulus presentation computer. These are capable to expand beyond the S-O-R model. These can give the stimulus presentation computer instant direct feedback and quickly change the stimulus according to the parrticipant's response. <br> **example: keyboard/mouse input and majority of eye trackers** |
 
 ![combining systems with different levels of integration](img/integration_level.png)
 
@@ -133,7 +147,7 @@ Generally speaking, we can categorize them into three levels. Note that this is 
 
 We will focus our discussion on combining measurement systems in level 2 mentioned above; "Stimulus" to "Response" one-way sync signal connection.  
 For the old folks, this is all common knowledge, but it seems that's not the case for the younger crowd.  
-This is understandable because any information regarding synchronization is poorly documented and even if you find any information, it won't be in the psychology field in the first place.
+This is understandable because any information about synchronization is poorly documented and even if you find any, it won't be in the psychology field in the first place.
 
 There are two common protocols used for sync signals in physiological measurements.
 
@@ -346,12 +360,26 @@ The raw source code is ```/Niioka_etal_2023/CIT_FINAL_V2.m```.
 
 ### StimTracker to measurement systems
 
-TTL is sent from the DIN connector behind the StimTracker.  
+TTL is sent from the DIN connector on the rear of the StimTracker.  
 The pin-out can be found on Cedrus's official support page.  
 [https://cedrus.com/support/stimtracker/tn1960_quad_ttl_output.htm](https://cedrus.com/support/stimtracker/tn1960_quad_ttl_output.htm)  
 
-We made a custom DIN connector to D-sub 9-pin connector adapter.  
-Then, we repurposed a DB9 to BNC*8 adapter box.  
+We made a custom DIN connector to D-sub 9-pin connector adapter.
+
+The standard pin-out of the DIN connector is shown below. Note that pin 6 is above pin 5 and pin 8 is under pin 9.
+
+![DIN pinout](img/din9pinout.png)
+> source: [https://www.ni.com/ja-jp/support/documentation/supplemental/18/pinout-of-the-9-pin-din-cable-for-the-ni-dmm-and-ni-high-speed-d.html](https://www.ni.com/ja-jp/support/documentation/supplemental/18/pinout-of-the-9-pin-din-cable-for-the-ni-dmm-and-ni-high-speed-d.html)
+
+
+
+The standard pin-out of the DB9 connector is shown below.
+
+![DB9 pinout](img/db9pinout.png)
+> source: [http://www.clarkwire.com/PinOutRSDB9.htm](http://www.clarkwire.com/PinOutRSDB9.htm)
+
+Then, we repurposed a DB9 to BNC*8 adapter box.
+
 We used BNC splitters to split the signal to 2 outputs; ETG-4000 and Polymate.
 
 ETG-4000 has BNC connectors where we can directly connect co-ax cables.
@@ -368,6 +396,10 @@ For details, consult the official manuals for ETG-4000, Polymate V AP5148 and AP
 | stimulus onset   | light sensor 1 | 8 | 8 | 3 | 3 |
 
 ![StimTracker to measurement systems](img/stim2measures.png)
+
+### What could have been done better
+
+
 
 ## References
 
