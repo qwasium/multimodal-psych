@@ -411,11 +411,3 @@ For details, consult the official manuals for ETG-4000, Polymate V AP5148 and AP
 | stimulus onset   | light sensor 1 | 8 | 8 | 3 | 3 |
 
 ![StimTracker to measurement systems](img/stim2measures.png)
-
-### What could have been done better
-
-
-
-## References
-
-### videos
