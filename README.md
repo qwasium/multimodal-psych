@@ -1,7 +1,5 @@
 # multimodal-psych
 
-# DRAFT; still in writing
-
 Fundamentals of system design in multimodal physiological measurements.
 
 Mar. 15, 2023 Simon Kuwahara
